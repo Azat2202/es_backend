@@ -3,6 +3,7 @@ package com.example.es_backend.controllers;
 import com.example.es_backend.dto.SleepSummaryDto;
 import com.example.es_backend.models.SleepData;
 import com.example.es_backend.repositories.SleepDataRepository;
+import com.example.es_backend.services.SleepGraphService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Sleep Controller", description = "Контроллер для админ панели")
 public class SleepController {
-    private SleepDataRepository sleepDataRepository;
-
-    @Autowired
-    public SleepController(SleepDataRepository sleepDataRepository) {
-        this.sleepDataRepository = sleepDataRepository;
-    }
+    private final SleepDataRepository sleepDataRepository;
+    private final SleepGraphService sleepGraphService;
 
     @GetMapping("/sleep/")
     public List<SleepSummaryDto> getSleepSummaries() {
@@ -46,4 +43,19 @@ public class SleepController {
     public List<SleepData> getAllSleepData(@PathVariable Long sleepId) {
         return sleepDataRepository.findBySleepId(sleepId);
     }
+
+    @GetMapping("/sleep/{sleepId}/graph")
+    public List<Boolean> getSleepDataGraph(@PathVariable Long sleepId) {
+        var data = sleepGraphService.getSleepGraphData(
+                sleepDataRepository.findBySleepId(sleepId)
+        );
+        // easy export to excel)
+//        System.out.println(String.join("\n",
+//                data.stream()
+//                        .map(a -> a ? "1" : "0")
+//                        .toList()));
+        return data;
+    }
+
+
 }
