@@ -50,12 +50,12 @@ public class SleepGraphService {
 
 
     public List<Boolean> getSleepGraphData(List<SleepData> sleepDataRaw) {
-        return shrinkData(
-                mapDataToIsHigh(
-                    groupData(
-                        sleepDataRaw.stream().map(SleepData::getData).toList()
-                )
-            )
-        );
+        List<Float> sleepData;
+        if (sleepDataRaw.size() > 1000) {
+            sleepData = groupData(sleepDataRaw.stream().map(SleepData::getData).toList());
+        } else {
+            sleepData = sleepDataRaw.stream().map(SleepData::getData).toList();
+        }
+        return shrinkData(mapDataToIsHigh(sleepData));
     }
 }
