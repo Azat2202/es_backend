@@ -1,15 +1,22 @@
 package com.example.es_backend.services;
 
+import com.example.es_backend.models.Sleep;
 import com.example.es_backend.models.SleepData;
+import com.example.es_backend.repositories.SleepDataRepository;
+import com.example.es_backend.repositories.SleepRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class SleepGraphService {
+    private final SleepRepository sleepRepository;
+    private final SleepDataRepository sleepDataRepository;
+
     // группирует список по 100 значений и находит максимум в каждой выборке
     public List<Float> groupData(List<Float> data) {
         List<Float> sums = new ArrayList<>();
@@ -40,9 +47,6 @@ public class SleepGraphService {
                 if (i > 0) {
                     result.set(i - 1, true);
                 }
-//                if (i < list.size() - 1) {
-//                    result.set(i + 1, true);
-//                }
             }
         }
         return result;
@@ -57,5 +61,25 @@ public class SleepGraphService {
             sleepData = sleepDataRaw.stream().map(SleepData::getData).toList();
         }
         return shrinkData(mapDataToIsHigh(sleepData));
+    }
+
+    @Scheduled(fixedDelay = 1000)
+    public void alarmSchedule() {
+        Sleep sleep = sleepRepository.findMaxIdEntity().get();
+        LocalDateTime alarmTime = sleep.getAlarmTime().toLocalDateTime();
+        if (alarmTime.minusMinutes(sleep.getAlarmPause()).isBefore(LocalDateTime.now())) {
+            System.out.println("Еще рано для будильника!");
+            return;
+        }
+        List<Boolean> data = mapDataToIsHigh(
+                sleepDataRepository.findBySleepId(sleep.getId())
+                        .stream()
+                        .map(SleepData::getData)
+                        .toList());
+        if(data.getLast()){
+            System.out.println("ДОБРОЕ УТРО");
+        } else {
+            System.out.println("ПОСПИТЕ ЕЩЕ!");
+        }
     }
 }
